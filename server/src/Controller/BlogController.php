@@ -13,24 +13,6 @@ use Symfony\Component\Serializer\SerializerInterface;
 #[Route('/blog', name: 'blog_')]
 class BlogController extends AbstractController
 {
-    private const POSTS = [
-        [
-            'id' => 1,
-            'slug' => 'hello-world',
-            'title' => 'Hello world!',
-        ],
-        [
-            'id' => 2,
-            'slug' => 'another-post',
-            'title' => 'This is another post!',
-        ],
-        [
-            'id' => 3,
-            'slug' => 'last-example',
-            'title' => 'This is the last example!',
-        ],
-    ];
-
     #[Route('/{page}', name: 'list', defaults: ['page' => 1], requirements: ['page' => '\d+'])]
     public function list(Request $request, BlogPostRepository $blogPostRepository, $page = 1): JsonResponse
     {
@@ -49,15 +31,17 @@ class BlogController extends AbstractController
     }
 
     #[Route('/show/{id}', name: 'show_id', requirements: ['id' => '\d+'])]
-    public function show($id, BlogPostRepository $blogPostRepository): JsonResponse
+    public function show(BlogPost $blogPost): JsonResponse
     {
-        return $this->json($blogPostRepository->find($id));
+        // Do find($id) on repository
+        return $this->json($blogPost);
     }
 
     #[Route('/show/{slug}', name: 'show_slug')]
-    public function showSlug($slug, BlogPostRepository $blogPostRepository): JsonResponse
+    public function showSlug(BlogPost $blogPost): JsonResponse
     {
-        return $this->json($blogPostRepository->findBy(['slug' => $slug]));
+        // Do findOneBy(['slug' => contents of {slug}]) on repository
+        return $this->json($blogPost);
     }
 
     #[Route('/add', name: 'add', methods: ['POST'])]
@@ -67,6 +51,16 @@ class BlogController extends AbstractController
 
         $blogPostRepository->save($blogPost, true);
 
-        return $this->json($blogPost);
+        return $this->json($blogPost, 201);
+    }
+
+    #[Route('/delete/{id}', name: 'delete', methods: ['DELETE'])]
+    public function delete($id, BlogPostRepository $blogPostRepository)
+    {
+        $blogPost = $blogPostRepository->find($id);
+
+        $blogPostRepository->remove($blogPost, true);
+
+        return $this->json(null, 204);
     }
 }

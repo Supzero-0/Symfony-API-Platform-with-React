@@ -30,6 +30,15 @@ class BlogPostRepository extends ServiceEntityRepository
         }
     }
 
+    public function remove(BlogPost $entity, bool $flush = false): void
+    {
+        $this->getEntityManager()->remove($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
     //    /**
     //     * @return BlogPost[] Returns an array of BlogPost objects
     //     */
