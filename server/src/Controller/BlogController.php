@@ -32,30 +32,32 @@ class BlogController extends AbstractController
     ];
 
     #[Route('/{page}', name: 'list', defaults: ['page' => 1], requirements: ['page' => '\d+'])]
-    public function list(Request $request, $page = 1): JsonResponse
+    public function list(Request $request, BlogPostRepository $blogPostRepository, $page = 1): JsonResponse
     {
         $limit = $request->get('limit', 10);
+        $items = $blogPostRepository->findAll();
+
         return $this->json(
             [
                 'page' => $page,
                 'limit' => $limit,
-                'data' => array_map(function ($item) {
-                    return $this->generateUrl('blog_show_id', ['id' => $item['id']]);
-                }, self::POSTS),
+                'data' => array_map(function (BlogPost $item) {
+                    return $this->generateUrl('blog_show_id', ['id' => $item->getId()]);
+                }, $items),
             ]
         );
     }
 
     #[Route('/show/{id}', name: 'show_id', requirements: ['id' => '\d+'])]
-    public function show($id): JsonResponse
+    public function show($id, BlogPostRepository $blogPostRepository): JsonResponse
     {
-        return $this->json(self::POSTS[array_search($id, array_column(self::POSTS, 'id'))]);
+        return $this->json($blogPostRepository->find($id));
     }
 
     #[Route('/show/{slug}', name: 'show_slug')]
-    public function showSlug($slug): JsonResponse
+    public function showSlug($slug, BlogPostRepository $blogPostRepository): JsonResponse
     {
-        return $this->json(self::POSTS[array_search($slug, array_column(self::POSTS, 'slug'))]);
+        return $this->json($blogPostRepository->findBy(['slug' => $slug]));
     }
 
     #[Route('/add', name: 'add', methods: ['POST'])]
