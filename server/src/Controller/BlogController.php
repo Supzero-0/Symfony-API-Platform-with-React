@@ -2,10 +2,13 @@
 
 namespace App\Controller;
 
+use App\Entity\BlogPost;
+use App\Repository\BlogPostRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\SerializerInterface;
 
 #[Route('/blog', name: 'blog_')]
 class BlogController extends AbstractController
@@ -29,7 +32,7 @@ class BlogController extends AbstractController
     ];
 
     #[Route('/{page}', name: 'list', defaults: ['page' => 1], requirements: ['page' => '\d+'])]
-    public function list($page = 1, Request $request): JsonResponse
+    public function list(Request $request, $page = 1): JsonResponse
     {
         $limit = $request->get('limit', 10);
         return $this->json(
@@ -53,5 +56,15 @@ class BlogController extends AbstractController
     public function showSlug($slug): JsonResponse
     {
         return $this->json(self::POSTS[array_search($slug, array_column(self::POSTS, 'slug'))]);
+    }
+
+    #[Route('/add', name: 'add', methods: ['POST'])]
+    public function add(Request $request, SerializerInterface $serializer, BlogPostRepository $blogPostRepository)
+    {
+        $blogPost = $serializer->deserialize($request->getContent(), BlogPost::class, 'json');
+
+        $blogPostRepository->save($blogPost, true);
+
+        return $this->json($blogPost);
     }
 }
